@@ -1,0 +1,31 @@
+stateDiagram-v2
+    [*] --> Install
+    Install --> Permissions
+    Permissions --> ServiceIdle : Permissions Granted
+    
+    state ServiceIdle {
+        [*] --> Monitoring
+        Monitoring --> ActiveApp : User opens Instagram
+        ActiveApp --> CheckRules
+        
+        state CheckRules {
+            [*] --> IsPaused?
+            IsPaused? --> Allow : Yes
+            IsPaused? --> AnalyzeContent : No
+            
+            AnalyzeContent --> CheckDM : Context check
+            CheckDM --> Allow : Is DM/Chat
+            CheckDM --> CheckReels : No
+            
+            CheckReels --> Block : "Reels" detected
+            CheckReels --> CheckExplore : No
+            
+            CheckExplore --> Block : "Search/Explore" detected
+            CheckExplore --> Allow : No match
+        }
+        
+        Block --> OverlayShown
+        OverlayShown --> Monitoring : User presses Back
+    }
+
+    Allow --> Monitoring
