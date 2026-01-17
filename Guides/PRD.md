@@ -1,146 +1,93 @@
-# PRD – Halt 🛑
+# Product Requirements Document (PRD)
 
-**Kill Infinite Scrolling at the OS Level**
-
----
-
-## 1. Product Overview
-
-### Problem
-
-Infinite scrolling apps (Instagram Reels, Explore, YouTube Shorts, LinkedIn feed, Twitter, Snapchat) exploit attention loops, causing time loss and reduced focus.
-
-Android does not provide native controls to block specific app sections (like Reels). Existing digital wellbeing tools are app-level, not **screen-level**.
+| **Project Name** | Halt |
+| :--- | :--- |
+| **Version** | 1.0 (MVP) |
+| **Status** | Implementation Complete |
+| **Last Updated** | January 17, 2026 |
+| **Platform** | Android (Native Kotlin) |
 
 ---
 
-## 2. Goals & Success Criteria
+## 1. Executive Summary
+**Halt** is a digital wellness utility designed to combat algorithmic addiction. Unlike traditional app blockers that disable entire applications, Halt functions as an intelligent **Content Control Layer** at the operating system level. It selectively intercepts and blocks infinite-scrolling feeds (e.g., Instagram Reels, YouTube Shorts) while preserving access to utility features like Direct Messages and Search.
 
-### Primary Goal
+## 2. Problem Statement
+Social media platforms are engineered to maximize time-on-screen through "infinite scrolling" mechanisms.
+*   **User Pain Point**: Users want to stay connected (messaging, updates) but lack the self-control to avoid getting trapped in addictive video feeds.
+*   **Market Gap**: Existing solutions are binary—they block the app entirely (isolating the user) or set easily ignored time limits. There is no solution that filters *content types* within native apps.
 
-Prevent users from entering infinite scrolling feeds while allowing intentional consumption.
+## 3. Goals & Objectives
+*   **Primary Goal**: Minimize "doomscrolling" time by blocking access to short-form algorithmic video feeds.
+*   **Secondary Goal**: Maintain user retention by allowing intentional usage (messaging, specific content lookups).
+*   **Technical Goal**: Achieve <100ms detection latency with minimal battery impact (<1% per day).
 
-### Status: ✅ IMPLEMENTED
-
-* **Instagram Reels**: BLOCKED
-* **Instagram Explore**: BLOCKED
-* **Browser Shorts/Reels**: BLOCKED
-* **Intentional Use (DMs)**: ALLOWED
-* **Pause / Strict Mode**: IMPLEMENTED
-
----
-
-## 3. Core Functional Requirements
-
----
-
-### FR-1: Detect Active App
-
-The system detects which app is currently in the foreground.
-
-**Implementation (Actual)**
-* `HaltAccessibilityService` checks `event.packageName`.
-* Supports: Instagram, Chrome, Firefox, Samsung Internet.
+## 4. User Personas
+1.  **The Student**: Needs Instagram for class chats but loses hours to Reels.
+2.  **The Professional**: Uses LinkedIn/Twitter for networking but gets distracted by the feed.
+3.  **The Creator**: Needs to post content but wants to avoid consuming it.
 
 ---
 
-### FR-2: Detect Infinite Scrolling Screens
+## 5. Functional Requirements (FR)
 
-The system detects Reels and Explore screens using `ScreenDetector`.
+### **Core Blocking Engine**
 
-**Detection Strategy**
-* **Reels**: Checks for "Reels" text nodes.
-* **Explore**: Checks for "Search" text + "Explore" context or scrolling events.
-* **Browsers**: Scans for URLs like `youtube.com/shorts` or `instagram.com/reels`.
+| ID | Requirement | Priority | Implementation Status |
+| :--- | :--- | :--- | :--- |
+| **FR-01** | **Active App Detection**<br>System must identify the foreground application package (Instagram, Chrome, etc.). | **P0** | ✅ Implemented |
+| **FR-02** | **Reels Detection (Native)**<br>System must detect the "Reels" interface via accessibility node text scanning. | **P0** | ✅ Implemented |
+| **FR-03** | **Explore Grid Detection**<br>System must identify the "Search/Explore" grid to prevent mindless browsing. | **P0** | ✅ Implemented |
+| **FR-04** | **Browser Shorts Detection**<br>System must detect `youtube.com/shorts` and `instagram.com/reels` URLs in supported browsers (Chrome, Firefox). | **P1** | ✅ Implemented |
 
----
+### **Smart Exceptions**
 
-### FR-3: Block Entry via UI Buttons
+| ID | Requirement | Priority | Implementation Status |
+| :--- | :--- | :--- | :--- |
+| **FR-05** | **Intentional DM Access**<br>System must ALLOW access to Reels if opened within a Direct Message context ("sent you" indicator). | **P0** | ✅ Implemented |
+| **FR-06** | **Pause Mechanism**<br>User can temporarily suspend blocking for a fixed duration (15 minutes). | **P1** | ✅ Implemented |
+| **FR-07** | **Strict Mode**<br>Option to disable the "Pause" capability for enforcing discipline. | **P2** | ✅ Implemented |
 
-If user clicks Reels / Explore button → block immediately.
+### **User Interface**
 
----
-
-### FR-4: Allow Content Opened via DM / Link
-
-If a reel/video is opened via message or deep link → allow access.
-
-**Logic (Implemented)**
-* Checks for "sent you" text triggers.
-* DM context is checked *before* blocking logic.
-
----
-
-### FR-5: Overlay Blocking Screen
-
-When blocked, the user must not interact with the feed.
-
-**Implementation**
-* `BlockActivity` launched with `FLAG_ACTIVITY_NEW_TASK`.
-* "Take a breath" UI.
+| ID | Requirement | Priority | Implementation Status |
+| :--- | :--- | :--- | :--- |
+| **FR-08** | **Blocking Overlay**<br>A full-screen, non-dismissible overlay ("Take a breath") must appear immediately upon detection. | **P0** | ✅ Implemented |
+| **FR-09** | **Dashboard**<br>Main app screen displaying service status and providing permission granting flows. | **P0** | ✅ Implemented |
 
 ---
 
-### FR-6: Pause or Strict Mode
+## 6. Non-Functional Requirements (NFR)
 
-**Implemented Features**:
-* **Pause**: Allow 15 minutes of usage.
-* **Strict Mode**: Hides the "Pause" button in Settings.
-* **Persistence**: Managed via `SettingsManager` (SharedPreferences).
-
----
-
-### FR-7: Browser Shorts Blocking
-
-Short-form URLs opened in browsers are blocked.
-
-**Supported Browsers**:
-* Chrome (`com.android.chrome`)
-* Firefox (`org.mozilla.firefox`)
-* Samsung Internet (`com.sec.android.app.sbrowser`)
+*   **NFR-01: Performance**: Detection logic must execute in under 100ms to prevent user viewing of blocked content.
+*   **NFR-02: Privacy**: All processing must occur **on-device**. No screen data shall be transmitted to external servers.
+*   **NFR-03: Battery Efficiency**: The Accessibility Service must not poll; it should only react to `TYPE_WINDOW_CONTENT_CHANGED` events efficiently.
+*   **NFR-04: Reliability**: The service must automatically restart or prompt the user if killed by the OS.
 
 ---
 
-## 8. UI / UX
+## 7. Technical Architecture
+The solution relies on the Android **Accessibility API**.
 
-### Screens (Implemented)
+*   **Service Layer**: `HaltAccessibilityService` (Background Process)
+*   **Logic Layer**: `ScreenDetector` (Heuristic Analysis)
+*   **Data Layer**: `SettingsManager` (SharedPreferences)
 
-**Home (`MainActivity`)**
-* Service Status (Active/Inactive).
-* Permission Grants.
-* Settings Entry.
-
-**Block Overlay (`BlockActivity`)**
-* Reason shown (e.g., "Reels Blocked").
-* Back button.
-
-**Settings (`SettingsActivity`)**
-* Strict Mode Toggle.
-* Pause Button (15m).
+> **Constraint**: This architecture requires the user to manually grant "Accessibility" and "Display Over Apps" permissions. This is a known friction point acceptable for this utility category.
 
 ---
 
-## 9. Technical Architecture
+## 8. Success Metrics (KPIs)
 
-```mermaid
-graph TD
-    Service[HaltAccessibilityService] --> Detector[ScreenDetector]
-    Service --> Settings[SettingsManager]
-    Detector -->|Result| Service
-    Service -->|Block| Overlay[BlockActivity]
-```
-
-**Components**:
-* `HaltAccessibilityService`: Main entry point.
-* `ScreenDetector`: Pure logic class for analyzing `AccessibilityNodeInfo`.
-* `SettingsManager`: Handles `SharedPreferences`.
+*   **Block Rate**: % of Reels access attempts successfully blocked. (Target: 100%)
+*   **False Positive Rate**: % of legitimate screens (DMs, Profile) incorrectly blocked. (Target: < 1%)
+*   **Retention**: % of users who keep the Accessibility Service enabled after 7 days.
 
 ---
 
-## 14. Definition of Done
+## 9. Future Roadmap (Post-MVP)
 
-* [x] Instagram Reels blocked
-* [x] Instagram Explore blocked
-* [x] Browser Shorts blocked
-* [x] No accidental blocking of DMs
-* [x] App runs silently
+*   [ ] **YouTube App Support**: Native YouTube app blocking (complex node hierarchy).
+*   [ ] **Usage Analytics**: Local charts showing "Time Saved" or "Reels Blocked".
+*   [ ] **Gamification**: Streaks for days without disabling the service.
+*   [ ] **Emergency Unlock**: A complex task (math problem or typing) to unlock Strict Mode.
