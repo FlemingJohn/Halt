@@ -45,4 +45,30 @@ class ScreenDetector {
 
         return false
     }
+
+    fun isBrowserReelOrShort(root: AccessibilityNodeInfo): String? {
+        // Recursively find text that looks like a blocked URL
+        // We look for specific patterns: "youtube.com/shorts", "instagram.com/reels"
+        val blockedPatterns = listOf("youtube.com/shorts", "instagram.com/reels")
+        
+        // Using a BFS or DFS to find text nodes. 
+        // Note: Performance can be an issue with full tree scan, so we rely on findAccessibilityNodeInfosByText if possible,
+        // but browsers often put URL in an EditText or dedicated TextView.
+        
+        // Heuristic 1: Check standard URL bar IDs (requires known IDs, less robust)
+        // Heuristic 2: Valid text search.
+        
+        for (pattern in blockedPatterns) {
+            // "youtube.com" check first to narrow down
+            val domainNodes = root.findAccessibilityNodeInfosByText(pattern.substringBefore("/"))
+            
+            for (node in domainNodes) {
+                val text = node.text?.toString() ?: node.contentDescription?.toString() ?: ""
+                if (text.contains(pattern, ignoreCase = true)) {
+                    return if (pattern.contains("youtube")) "Shorts Blocked" else "Reels Blocked"
+                }
+            }
+        }
+        return null
+    }
 }

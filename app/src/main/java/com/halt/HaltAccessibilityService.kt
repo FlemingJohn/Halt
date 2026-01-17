@@ -10,6 +10,16 @@ class HaltAccessibilityService : AccessibilityService() {
 
     private val TAG = "HaltAccessibilityService"
     private val INSTAGRAM_PACKAGE = "com.instagram.android"
+    private val CHROME_PACKAGE = "com.android.chrome"
+    private val SAMSUNG_BROWSER_PACKAGE = "com.sec.android.app.sbrowser"
+    private val FIREFOX_PACKAGE = "org.mozilla.firefox"
+    
+    private val SUPPORTED_PACKAGES = setOf(
+        INSTAGRAM_PACKAGE, 
+        CHROME_PACKAGE, 
+        SAMSUNG_BROWSER_PACKAGE, 
+        FIREFOX_PACKAGE
+    )
     
     private val screenDetector = ScreenDetector()
     private lateinit var settingsManager: SettingsManager
@@ -21,7 +31,9 @@ class HaltAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
-        if (event.packageName?.toString() != INSTAGRAM_PACKAGE) return
+        val packageName = event.packageName?.toString() ?: return
+        
+        if (packageName !in SUPPORTED_PACKAGES) return
         
         // 0. Check Settings (Pause)
         if (!::settingsManager.isInitialized) settingsManager = SettingsManager(this)
@@ -31,22 +43,32 @@ class HaltAccessibilityService : AccessibilityService() {
 
         val rootNode = rootInActiveWindow ?: return
 
-        // 1. Check Exceptions (DMs)
-        if (screenDetector.isAllowedContext(rootNode, event)) {
-            Log.d(TAG, "Allowed Context (DM/Message)")
-            return
-        }
-
-        // 2. Check Reels
-        if (screenDetector.isReels(rootNode, event)) {
-             blockScreen("Reels Blocked")
-             return
-        }
-        
-        // 3. Check Explore
-        if (screenDetector.isExplore(rootNode, event)) {
-            blockScreen("Explore Blocked")
-            return
+        // APP SPECIFIC CHECKS
+        if (packageName == INSTAGRAM_PACKAGE) {
+             // 1. Check Exceptions (DMs)
+            if (screenDetector.isAllowedContext(rootNode, event)) {
+                Log.d(TAG, "Allowed Context (DM/Message)")
+                return
+            }
+    
+            // 2. Check Reels
+            if (screenDetector.isReels(rootNode, event)) {
+                 blockScreen("Reels Blocked")
+                 return
+            }
+            
+            // 3. Check Explore
+            if (screenDetector.isExplore(rootNode, event)) {
+                blockScreen("Explore Blocked")
+                return
+            }
+        } else {
+            // BROWSER CHECKS
+            val browserBlockReason = screenDetector.isBrowserReelOrShort(rootNode)
+            if (browserBlockReason != null) {
+                blockScreen(browserBlockReason)
+                return
+            }
         }
     }
 
