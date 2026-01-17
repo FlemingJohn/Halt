@@ -1,250 +1,108 @@
-Let’s strip this down to **how it actually works on a real phone**, not theory, not buzzwords.
+# How Halt Actually Works (The Logic)
 
-I’ll explain **Instagram Reels** and **Instagram Explore** separately, with **real-time flow + tiny Kotlin snippets**, exactly how blocker apps do it.
-
----
-
-## First: one core truth (important)
-
-Android **cannot modify Instagram**.
-So your app does **this instead**:
-
-> Watch the screen → recognize where the user is → stop them instantly.
-
-That’s it. No hacking, no APIs.
+Let’s strip this down to **how it actually works on a real phone**, based on the implementation in `com.halt`.
 
 ---
 
-## How Instagram Reels is blocked (step by step)
+## The Core Loop
 
-### What happens in real life
-
-1. User opens Instagram
-2. User taps **Reels button** (bottom navbar)
-3. Instagram loads the Reels screen
-4. Your Accessibility Service sees this
-5. Your app **immediately blocks the screen**
-
-User never gets to scroll.
+1. **Event Fired**: Android tells us "Something changed on screen" (`HaltAccessibilityService`).
+2. **Context Check**: Are we in a supported app? (Instagram, Chrome, Firefox).
+3. **Settings Check**: Is the user "Paused"? If yes, do nothing.
+4. **Analysis**: We pass the screen content (`rootInActiveWindow`) to `ScreenDetector`.
+5. **Action**: If `ScreenDetector` returns a match, we launch `BlockActivity`.
 
 ---
 
-### How your app detects “Reels”
+## 1. Smart Detection (`ScreenDetector.kt`)
 
-Instagram Reels screen has:
+We separated the detection logic into a pure class.
 
-* A visible **“Reels” tab/button**
-* Continuous **vertical scroll**
-* Specific **UI text nodes**
-
-Your app listens for **UI events**.
-
----
-
-### Detection logic (simple & real)
-
+### Instagram Reels
 ```kotlin
-override fun onAccessibilityEvent(event: AccessibilityEvent) {
-    if (event.packageName != "com.instagram.android") return
+fun isReels(root: AccessibilityNodeInfo): Boolean {
+    // Look for "Reels" text on screen
+    return root.findAccessibilityNodeInfosByText("Reels").isNotEmpty()
+}
+```
 
-    val root = rootInActiveWindow ?: return
-    val reelsNodes = root.findAccessibilityNodeInfosByText("Reels")
-
-    if (reelsNodes.isNotEmpty()) {
-        blockScreen("Instagram Reels blocked")
+### Instagram Explore
+```kotlin
+fun isExplore(root: AccessibilityNodeInfo, event: AccessibilityEvent?): Boolean {
+    // Look for "Search" + Context
+    val hasSearch = root.findAccessibilityNodeInfosByText("Search").isNotEmpty()
+    
+    // If we are scrolling inside a search view, it's likely the Explore grid
+    if (hasSearch && event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+        return true
     }
+    
+    // Explicit "Explore" label
+    return root.findAccessibilityNodeInfosByText("Explore").isNotEmpty()
 }
 ```
 
-The moment the Reels screen appears → overlay shows.
-
----
-
-### What the user experiences
-
-* Tap Reels
-* Screen instantly turns into **“Reels Blocked”**
-* No scrolling possible
-* Back button returns to Instagram home
-
-This feels **instant**, not delayed.
-
----
-
-## How Instagram Explore is blocked (step by step)
-
-Explore is trickier — but still doable.
-
----
-
-### Real-life Explore flow
-
-1. User taps 🔍 **Search / Explore**
-2. Grid of endless posts appears
-3. User scrolls infinitely
-
-That grid is what you block.
-
----
-
-### How your app detects Explore
-
-Explore page has:
-
-* “Search” text field at top
-* Image grid
-* No DM/chat context
-
-You detect **Search + scroll**.
-
----
-
-### Detection logic (real approach)
+### Browser Blocking (New!)
+We scan text nodes for specific URL patterns. This works even if the URL bar is hidden, as long as the URL is present in the node tree (common in accessibility trees).
 
 ```kotlin
-val searchNodes = root.findAccessibilityNodeInfosByText("Search")
-
-if (searchNodes.isNotEmpty()) {
-    blockScreen("Instagram Explore blocked")
+fun isBrowserReelOrShort(root: AccessibilityNodeInfo): String? {
+    val patterns = listOf("youtube.com/shorts", "instagram.com/reels")
+    
+    // Heuristic: Does any node contain these strings?
+    // We scan the tree (or specific text nodes) for matches.
+    // Result: "Shorts Blocked" or "Reels Blocked"
 }
 ```
 
-Or block when scrolling starts:
+---
+
+## 2. The Exception Rule (DMs)
+
+The most important feature is **not being annoying**. We allow Reels if they are sent in a DM.
+
+**Logic**:
+We check for "sent you" indicators *before* running the blocking logic.
 
 ```kotlin
-if (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-    blockScreen("Explore feed blocked")
+if (screenDetector.isAllowedContext(rootNode, event)) {
+    // User is in a chat. Do not block.
+    return
 }
 ```
 
-Most blocker apps combine **text + scroll detection** for stability.
-
 ---
 
-### What the user experiences
+## 3. The "Halt" Action
 
-* Tap Explore
-* Grid loads for a split second
-* Block overlay appears
-* Scroll never happens
-
-Mission accomplished.
-
----
-
-## Important: Allow Reels opened via DM (smart behavior)
-
-This is where your app feels **intelligent**, not annoying.
-
----
-
-### DM reel flow (real)
-
-1. Friend sends reel in DM
-2. User taps the message
-3. Reel opens directly
-4. User watches → allowed
-
-Why allowed?
-
-* No Reels button click
-* Entry is intentional
-* No infinite loop
-
----
-
-### How your app allows it
+When a block is triggered, we don't just kill the app (that's jarring). We overlay a calming screen.
 
 ```kotlin
-if (event.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED) {
-    val text = event.text?.joinToString() ?: ""
-    if (text.contains("sent you", true)) {
-        return // allow
-    }
+val intent = Intent(this, BlockActivity::class.java).apply {
+    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required for Service
+    putExtra("REASON", "Reels Blocked")
 }
+startActivity(intent)
 ```
 
-Also:
-
-* Short session
-* No repeated scrolling
+**Why this works**:
+The activity launches *immediately* on top of Instagram. The user sees the blocker, not the feed.
 
 ---
 
-## How scrolling itself is stopped
+## 4. Strict Mode & Pausing (`SettingsManager`)
 
-Two methods (used together):
+We added a layer of control.
 
-### Method 1: Full-screen overlay (most reliable)
+* **Pause**: Saves a timestamp `pause_until` in SharedPreferences.
+* **Strict Mode**: If enabled, simply hides the "Pause" button in the UI.
 
 ```kotlin
-startActivity(
-    Intent(this, BlockActivity::class.java)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-)
+if (settingsManager.isPaused()) return // Skip all checks
 ```
 
-Overlay:
-
-* Covers entire screen
-* No interaction passes through
-* User must go back
-
 ---
 
-### Method 2: Force Back (optional)
+## Summary
 
-```kotlin
-performGlobalAction(GLOBAL_ACTION_BACK)
-```
-
-Used only when overlay fails.
-
----
-
-## Why this works even if Instagram updates UI
-
-Because you’re not relying on:
-
-* API
-* App internals
-* Private methods
-
-You’re relying on:
-
-* What the **user sees**
-* What Android exposes
-* Human-visible UI patterns
-
-That’s why apps like **No Scroll** survive updates.
-
----
-
-## One honest limitation (every judge knows this)
-
-Instagram may:
-
-* Rename labels
-* Change hierarchy
-
-Mitigation:
-
-* Multiple detection rules
-* Text + scroll + timing
-
-This is **expected**, not a failure.
-
----
-
-## Mental model (remember this)
-
-Think of your app as:
-
-> A security guard watching the screen
-> If the door says “Reels” or “Explore” → access denied
-
-You’re not fighting Instagram.
-You’re controlling **entry points**.
-
----
-
+This isn't magic. It's a highly specific **UI Watchdog** that knows exactly what "Doomscrolling" looks like to the Android Accessibility API.
