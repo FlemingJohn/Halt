@@ -24,6 +24,11 @@
             </intent-filter>
         </activity>
 
+        <activity 
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"/>
+
         <activity
             android:name=".BlockActivity"
             android:theme="@style/Theme.Halt.Fullscreen"

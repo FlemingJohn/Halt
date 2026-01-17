@@ -12,10 +12,22 @@ class HaltAccessibilityService : AccessibilityService() {
     private val INSTAGRAM_PACKAGE = "com.instagram.android"
     
     private val screenDetector = ScreenDetector()
+    private lateinit var settingsManager: SettingsManager
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        settingsManager = SettingsManager(this)
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event == null) return
         if (event.packageName?.toString() != INSTAGRAM_PACKAGE) return
+        
+        // 0. Check Settings (Pause)
+        if (!::settingsManager.isInitialized) settingsManager = SettingsManager(this)
+        if (settingsManager.isPaused()) {
+            return
+        }
 
         val rootNode = rootInActiveWindow ?: return
 

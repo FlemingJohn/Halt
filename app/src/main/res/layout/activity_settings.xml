@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@color/white">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginBottom="32dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+        
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Strict Mode"
+            android:textSize="18sp"
+            android:textColor="@color/black"/>
+
+        <Switch
+            android:id="@+id/switchStrictMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+    
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Strict mode prevents you from easily disabling the blocker or pausing it."
+        android:textColor="@color/dark_gray"
+        android:layout_marginBottom="32dp"/>
+
+    <Button
+        android:id="@+id/btnPause15"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pause for 15 Minutes"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnCancelPause"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Resume Blocking"
+        android:visibility="gone"/>
+
+</LinearLayout>

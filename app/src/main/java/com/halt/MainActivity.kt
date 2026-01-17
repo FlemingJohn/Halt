@@ -31,6 +31,10 @@ class MainActivity : AppCompatActivity() {
                 openOverlaySettings()
             }
         }
+        
+        findViewById<Button>(R.id.btnSettings).setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
     }
 
     override fun onResume() {
