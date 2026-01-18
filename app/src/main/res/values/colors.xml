@@ -2,7 +2,20 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Modern Neutral Palette (Slate) -->
+    <color name="slate_50">#F8FAFC</color>
+    <color name="slate_100">#F1F5F9</color>
+    <color name="slate_200">#E2E8F0</color>
+    <color name="slate_800">#1E293B</color>
+    <color name="slate_900">#0F172A</color>
+    
+    <!-- High Contrast Status Colors -->
+    <color name="emerald_600">#059669</color>
+    <color name="rose_600">#E11D48</color>
+    
+    <!-- Legacy Mappings for compatibility -->
     <color name="dark_gray">#FF333333</color>
     <color name="light_gray">#FFCCCCCC</color>
-    <color name="accent_red">#FFD32F2F</color>
+    <color name="accent_red">#E11D48</color>
 </resources>
