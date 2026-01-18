@@ -30,6 +30,8 @@ Digital wellness tools often fail because they are too blunt. They block the ent
 | **Explore Blocker** | ✅ | Prevents mindless scrolling on the Search/Explore grid. |
 | **Shorts Blocker** | ✅ | Blocks `youtube.com/shorts` in supported browsers. |
 | **Smart DMs** | ✅ | **Intelligent Exception**: Allows viewing content shared via DMs. |
+| **Reality Check** | ✅ | Unique, dynamic motivational overlays to break scrolling habits. |
+| **Professional UI** | ✅ | Minimalist "Swiss Design" with a focus on focus. |
 | **Pause Mode** | ✅ | Take a break. Pause blocking for 15 minutes. |
 | **Strict Mode** | 🚧 | Prevents disabling the service or pausing (In Progress). |
 

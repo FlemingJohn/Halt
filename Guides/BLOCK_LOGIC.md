@@ -18,27 +18,19 @@ Let’s strip this down to **how it actually works on a real phone**, based on t
 
 We separated the detection logic into a pure class.
 
-### Instagram Reels
+### Instagram Detection
+The `ScreenDetector` now uses a purely node-based approach, removing dependencies on `AccessibilityEvent` for detection, which improves reliability and reduces lint warnings.
+
 ```kotlin
 fun isReels(root: AccessibilityNodeInfo): Boolean {
-    // Look for "Reels" text on screen
-    return root.findAccessibilityNodeInfosByText("Reels").isNotEmpty()
+    val reelsText = root.findAccessibilityNodeInfosByText("Reels")
+    return reelsText.isNotEmpty()
 }
-```
 
-### Instagram Explore
-```kotlin
-fun isExplore(root: AccessibilityNodeInfo, event: AccessibilityEvent?): Boolean {
-    // Look for "Search" + Context
-    val hasSearch = root.findAccessibilityNodeInfosByText("Search").isNotEmpty()
-    
-    // If we are scrolling inside a search view, it's likely the Explore grid
-    if (hasSearch && event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-        return true
-    }
-    
-    // Explicit "Explore" label
-    return root.findAccessibilityNodeInfosByText("Explore").isNotEmpty()
+fun isExplore(root: AccessibilityNodeInfo): Boolean {
+    val searchNodes = root.findAccessibilityNodeInfosByText("Search")
+    val exploreNodes = root.findAccessibilityNodeInfosByText("Explore")
+    return searchNodes.isNotEmpty() && exploreNodes.isNotEmpty()
 }
 ```
 
@@ -73,20 +65,21 @@ if (screenDetector.isAllowedContext(rootNode, event)) {
 
 ---
 
-## 3. The "Halt" Action
-
-When a block is triggered, we don't just kill the app (that's jarring). We overlay a calming screen.
+### 3. The "Reality Check" Overlay
+When a block is triggered, we launch `BlockActivity` with a dynamic messaging system.
 
 ```kotlin
-val intent = Intent(this, BlockActivity::class.java).apply {
-    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required for Service
-    putExtra("REASON", "Reels Blocked")
-}
-startActivity(intent)
+private val focusMessages = listOf(
+    "STAY LURKING?" to "The algorithm is winning...",
+    "TIME IS LEAKING." to "Every reel you watch is a minute you'll never get back.",
+    "BUILDING CAPACITY." to "Attention is your most valuable resource."
+)
+
+// ... randomly chosen upon creation ...
 ```
 
 **Why this works**:
-The activity launches *immediately* on top of Instagram. The user sees the blocker, not the feed.
+The activity launches *immediately* on top of the distracting content. The professional Slate UI and striking typography help break the "scroll trance" by forcing a moment of reflection.
 
 ---
 

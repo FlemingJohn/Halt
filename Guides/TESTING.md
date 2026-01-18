@@ -40,7 +40,7 @@ When the app opens, you will see the **Dashboard**. You MUST grant permissions f
     *   Toggle **Use Halt** -> **ON**.
     *   Confirm the warning dialog (Allow).
 
-**Status Check**: The Dashboard should now say **"Service is Active"** in Green (or black).
+**Status Check**: The Dashboard should now say **"System Active"** in Green (`emerald_600`), and the permission buttons will disappear to maintain a clean workspace.
 
 ---
 
