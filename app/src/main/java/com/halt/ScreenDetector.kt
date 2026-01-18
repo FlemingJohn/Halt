@@ -47,28 +47,37 @@ class ScreenDetector {
     }
 
     fun isBrowserReelOrShort(root: AccessibilityNodeInfo): String? {
-        // Recursively find text that looks like a blocked URL
-        // We look for specific patterns: "youtube.com/shorts", "instagram.com/reels"
-        val blockedPatterns = listOf("youtube.com/shorts", "instagram.com/reels")
+        // More comprehensive list including mobile and desktop formats
+        val blockedPatterns = listOf(
+            "youtube.com/shorts",
+            "m.youtube.com/shorts",
+            "instagram.com/reels",
+            "m.instagram.com/reels"
+        )
         
-        // Using a BFS or DFS to find text nodes. 
-        // Note: Performance can be an issue with full tree scan, so we rely on findAccessibilityNodeInfosByText if possible,
-        // but browsers often put URL in an EditText or dedicated TextView.
+        return findBlockedUrl(root, blockedPatterns)
+    }
+
+    private fun findBlockedUrl(node: AccessibilityNodeInfo?, patterns: List<String>): String? {
+        if (node == null) return null
+
+        // Check current node text and description
+        val text = node.text?.toString() ?: ""
+        val description = node.contentDescription?.toString() ?: ""
         
-        // Heuristic 1: Check standard URL bar IDs (requires known IDs, less robust)
-        // Heuristic 2: Valid text search.
-        
-        for (pattern in blockedPatterns) {
-            // "youtube.com" check first to narrow down
-            val domainNodes = root.findAccessibilityNodeInfosByText(pattern.substringBefore("/"))
-            
-            for (node in domainNodes) {
-                val text = node.text?.toString() ?: node.contentDescription?.toString() ?: ""
-                if (text.contains(pattern, ignoreCase = true)) {
-                    return if (pattern.contains("youtube")) "Shorts Blocked" else "Reels Blocked"
-                }
+        for (pattern in patterns) {
+            if (text.contains(pattern, ignoreCase = true) || 
+                description.contains(pattern, ignoreCase = true)) {
+                return if (pattern.contains("youtube")) "Shorts Blocked" else "Reels Blocked"
             }
         }
+
+        // Recursively check children
+        for (i in 0 until node.childCount) {
+            val result = findBlockedUrl(node.getChild(i), patterns)
+            if (result != null) return result
+        }
+
         return null
     }
 }
