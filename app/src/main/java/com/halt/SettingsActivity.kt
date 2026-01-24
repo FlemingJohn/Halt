@@ -18,7 +18,7 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_settings)
 
         settingsManager = SettingsManager(this)
-        
+
         switchStrictMode = findViewById(R.id.switchStrictMode)
         btnPause15 = findViewById(R.id.btnPause15)
         btnCancelPause = findViewById(R.id.btnCancelPause)
@@ -39,7 +39,8 @@ class SettingsActivity : AppCompatActivity() {
 
         btnPause15.setOnClickListener {
             if (settingsManager.isStrictModeEnabled()) {
-                Toast.makeText(this, "Strict Mode enabled. Cannot pause.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Strict Mode enabled. Cannot pause.", Toast.LENGTH_SHORT)
+                        .show()
             } else {
                 settingsManager.pauseBlocking(15 * 60 * 1000)
                 updatePauseButtons()

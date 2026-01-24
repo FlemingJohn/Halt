@@ -43,13 +43,13 @@ class HaltAccessibilityService : AccessibilityService() {
             // 1. Check Exceptions (DMs)
 
             // Check event text for notification/toast based entry
-            val eventText = event.text?.joinToString() ?: ""
+            val eventText = event.text.joinToString()
             if (eventText.contains("sent you", ignoreCase = true)) {
                 Log.d(TAG, "Allowed Context (DM in event text)")
                 return
             }
 
-            if (screenDetector.isAllowedContext(rootNode)) {
+            if (screenDetector.isAllowedContext(rootNode, event)) {
                 Log.d(TAG, "Allowed Context (DM in nodes)")
                 return
             }
@@ -61,7 +61,7 @@ class HaltAccessibilityService : AccessibilityService() {
             }
 
             // 3. Check Explore
-            if (screenDetector.isExplore(rootNode)) {
+            if (screenDetector.isExplore(rootNode, event)) {
                 blockScreen("Explore Blocked")
                 return
             }
