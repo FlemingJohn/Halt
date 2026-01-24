@@ -10,19 +10,17 @@ import android.view.accessibility.AccessibilityNodeInfo
 class ScreenDetector {
 
     fun isExplore(root: AccessibilityNodeInfo, event: AccessibilityEvent?): Boolean {
-        // 1. "Search" bar usually present at top
+        // 1. Check for "Explore" header/text specifically as the prominent element
+        val exploreNodes = root.findAccessibilityNodeInfosByText("Explore")
+        if (exploreNodes.isEmpty()) return false
+
+        // 2. Refinement: If we also see "Search" or grid-like structure, it's more likely Explore
         val searchNodes = root.findAccessibilityNodeInfosByText("Search")
-        if (searchNodes.isNotEmpty()) {
-            // Refinement: If we are scrolling in a Search view, it's likely Explore feed
-            if (event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-                return true
-            }
-            // Even without scroll, if we see "Explore" text or grid structure
-            if (root.findAccessibilityNodeInfosByText("Explore").isNotEmpty()) {
-                return true
-            }
-        }
-        return false
+
+        // 3. EXCLUSION: If we see Home indicators, it's not Explore
+        if (isHomeFeed(root)) return false
+
+        return searchNodes.isNotEmpty() || event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED
     }
 
     fun isAllowedContext(root: AccessibilityNodeInfo, event: AccessibilityEvent?): Boolean {
@@ -37,11 +35,53 @@ class ScreenDetector {
     }
 
     fun isReels(root: AccessibilityNodeInfo): Boolean {
-        // 1. Check for "Reels" text (Bottom Tab or Top Header)
-        val reelsText = root.findAccessibilityNodeInfosByText("Reels")
-        if (reelsText.isNotEmpty()) return true
+        // 1. EXCLUSION: If we see Home feed specific elements, don't block
+        if (isHomeFeed(root)) return false
 
-        // 2. Fallback: Check for specific description/ID if known (omitted for generic approach)
+        // 2. Check for "Reels" text
+        val reelsText = root.findAccessibilityNodeInfosByText("Reels")
+        if (reelsText.isNotEmpty()) {
+            // Check if it's the selected tab or a high-level header
+            for (node in reelsText) {
+                if (node.isSelected || node.isClickable.not()
+                ) { // Headers aren't usually clickable in the same way tabs are
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    private fun isHomeFeed(root: AccessibilityNodeInfo): Boolean {
+        val homeSignals = listOf("Your Story", "Threads", "Messages", "Create", "Notifications")
+        for (signal in homeSignals) {
+            if (root.findAccessibilityNodeInfosByText(signal).isNotEmpty()) return true
+        }
+        return false
+    }
+
+    fun isYouTubeShorts(root: AccessibilityNodeInfo, event: AccessibilityEvent?): Boolean {
+        // 1. Check for "Shorts" tab selection
+        val shortsNodes = root.findAccessibilityNodeInfosByText("Shorts")
+        for (node in shortsNodes) {
+            if (node.isSelected) return true
+        }
+
+        // 2. Check for Shorts shelf in recommendations/search (The "Shorts" header)
+        // Usually, the shelf has a "Shorts" title and specific vertically oriented thumbs
+        // If we see "Shorts" and we are scrolling in a list that isn't the main player
+        if (shortsNodes.isNotEmpty() && event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
+            // This is a bit broad, but targeted within the YouTube package
+            return true
+        }
+
+        // 3. Full-screen Shorts player features (vertical layout buttons)
+        if (root.findAccessibilityNodeInfosByText("Remix").isNotEmpty() &&
+                        root.findAccessibilityNodeInfosByText("Subscriptions").isNotEmpty()
+        ) {
+            return true
+        }
 
         return false
     }

@@ -9,12 +9,19 @@ class HaltAccessibilityService : AccessibilityService() {
 
     private val TAG = "HaltAccessibilityService"
     private val INSTAGRAM_PACKAGE = "com.instagram.android"
+    private val YOUTUBE_PACKAGE = "com.google.android.youtube"
     private val CHROME_PACKAGE = "com.android.chrome"
     private val SAMSUNG_BROWSER_PACKAGE = "com.sec.android.app.sbrowser"
     private val FIREFOX_PACKAGE = "org.mozilla.firefox"
 
     private val SUPPORTED_PACKAGES =
-            setOf(INSTAGRAM_PACKAGE, CHROME_PACKAGE, SAMSUNG_BROWSER_PACKAGE, FIREFOX_PACKAGE)
+            setOf(
+                    INSTAGRAM_PACKAGE,
+                    YOUTUBE_PACKAGE,
+                    CHROME_PACKAGE,
+                    SAMSUNG_BROWSER_PACKAGE,
+                    FIREFOX_PACKAGE
+            )
 
     private val screenDetector = ScreenDetector()
     private lateinit var settingsManager: SettingsManager
@@ -63,6 +70,12 @@ class HaltAccessibilityService : AccessibilityService() {
             // 3. Check Explore
             if (screenDetector.isExplore(rootNode, event)) {
                 blockScreen("Explore Blocked")
+                return
+            }
+        } else if (packageName == YOUTUBE_PACKAGE) {
+            // YOUTUBE SPECIFIC CHECKS
+            if (screenDetector.isYouTubeShorts(rootNode, event)) {
+                blockScreen("Shorts Blocked")
                 return
             }
         } else {
