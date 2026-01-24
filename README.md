@@ -92,6 +92,13 @@ graph LR
 
 ---
 
+## Documentation
+
+*   **[Setup Guide](Guides/SETUP.md)**: Detailed instructions for installation and on-device configuration.
+*   **[Product Requirements Document (PRD)](Guides/PRD.md)**: Vision and functional requirements.
+
+---
+
 ## Implementation
 
 ### Prerequisites
