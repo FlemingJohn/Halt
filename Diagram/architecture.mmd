@@ -1,0 +1,17 @@
+graph LR
+    Start([User opens Halt]) --> Toggle{Service Enabled?}
+    
+    Toggle -- "No"  --> End([Dashboard])
+    Toggle -- "Yes" --> Active[[Monitoring Loop]]
+
+    subgraph Targets [Targeted Content]
+        direction TB
+        Active --> IG["Instagram: Reels & Explore"]
+        Active --> YT["YouTube: Shorts"]
+        Active --> Web["Browsers: Reels & Shorts"]
+    end
+
+    IG & YT & Web --> Decision{Blocked?}
+    
+    Decision -- "Yes" --> Block[Block Screen]
+    Decision -- "No"  --> Active
