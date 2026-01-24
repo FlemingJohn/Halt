@@ -77,11 +77,27 @@ graph LR
 
 ---
 
-## Documentation
+## Features and Status
 
-*   **[Product Requirements Document (PRD)](Guides/PRD.md)**: Vision and functional requirements.
-*   **[Logic Implementation Guide](Guides/BLOCK_LOGIC.md)**: Technical detail on detection algorithms.
-*   **[Verification Procedures](Guides/TESTING.md)**: Manual and automated testing protocols.
+| Feature | Status | Description |
+| :--- | :---: | :--- |
+| **Reels Management** | Complete | Detects and manages the Instagram Reels interface. |
+| **Explore Management** | Complete | Prevents scrolling on the Explore grid. |
+| **Shorts Management** | Complete | Manages YouTube Shorts in supported browsers and applications. |
+| **Contextual Exceptions** | Complete | Intelligent handling of content shared via direct messages. |
+| **Intervention Overlays** | Complete | Dynamic overlays designed to interrupt scrolling habits. |
+| **Administrative UI** | Complete | Professional dashboard for configuration. |
+| **Pause Functionality** | Complete | Temporary suspension of management for defined intervals. |
+| **Strict Mode** | In Progress | Enhanced safeguards against service deactivation. |
+
+---
+
+## Implementation
+
+### Prerequisites
+*   Android Studio (Hedgehog or newer)
+*   Physical Android Device (Accessibility features are best tested on hardware)
+*   Minimum SDK: 26 (Android 8.0)
 
 ---
 
