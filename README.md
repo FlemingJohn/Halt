@@ -11,14 +11,30 @@ Halt is a precision-engineered utility designed to manage digital consumption. B
 
 ---
 
+## Technical Specifications
+
+Halt is built using native Android APIs to ensure high performance and deep OS integration.
+
+### Core Service
+*   **`AccessibilityService`**: The application's engine, `HaltAccessibilityService`, inherits from the Android framework's built-in `AccessibilityService`. It receives real-time UI updates via the `onAccessibilityEvent` callback.
+
+### Built-in APIs and Functions
+*   **UI Analysis**: Uses `rootInActiveWindow` to retrieve the current screen's `AccessibilityNodeInfo` hierarchy.
+*   **Targeting**: Implements `findAccessibilityNodeInfosByText()` as a primary heuristic for identifying interactive elements (e.g., "Reels", "Shorts").
+*   **State Detection**: Leverages properties like `isSelected` to detect active navigation tabs and `isClickable` to differentiate between static headers and interactive controls.
+*   **Context Management**: Uses `SharedPreferences` via `SettingsManager` to persist state (Pause, Strict Mode) across application lifecycles.
+*   **Overlay Execution**: Launches the blocking interface using `Intent.FLAG_ACTIVITY_NEW_TASK` and `FLAG_ACTIVITY_CLEAR_TASK` for immediate intervention.
+
+---
+
 ## Compatibility
 
-Halt provides native support for high-consumption applications and widely used mobile browsers.
+Halt provides native support for specific application contexts and widely used mobile browsers.
 
-| Category | Supported Platforms |
+| Category | Targeted Packages |
 | :--- | :--- |
-| **Applications** | Instagram, YouTube |
-| **Web Browsers** | Google Chrome, Samsung Internet, Mozilla Firefox |
+| **Native Apps** | `com.instagram.android`, `com.google.android.youtube` |
+| **Web Browsers** | `com.android.chrome`, `com.sec.android.app.sbrowser`, `org.mozilla.firefox` |
 
 ---
 
@@ -34,6 +50,8 @@ Traditional digital wellness tools are often imprecise, blocking entire applicat
 ---
 
 ## System Architecture
+
+The following diagram illustrates the lifecycle of the Halt service and its surgical detection engine.
 
 ```mermaid
 graph LR
@@ -55,45 +73,7 @@ graph LR
     Decision -- "No"  --> Active
 ```
 
-👉 [Technical Architecture Details](Diagram/architecture.mmd)
-
----
-
-## Features and Status
-
-| Feature | Status | Description |
-| :--- | :---: | :--- |
-| **Reels Management** | Complete | Detects and manages the Instagram Reels interface. |
-| **Explore Management** | Complete | Prevents scrolling on the Explore grid. |
-| **Shorts Management** | Complete | Manages YouTube Shorts in supported browsers and applications. |
-| **Contextual Exceptions** | Complete | Intelligent handling of content shared via direct messages. |
-| **Intervention Overlays** | Complete | Dynamic overlays designed to interrupt scrolling habits. |
-| **Administrative UI** | Complete | Professional dashboard for configuration. |
-| **Pause Functionality** | Complete | Temporary suspension of management for defined intervals. |
-| **Strict Mode** | In Progress | Enhanced safeguards against service deactivation. |
-
----
-
-## Implementation
-
-### Prerequisites
-*   Android Studio (Hedgehog or newer)
-*   Physical Android Device (Accessibility features are best tested on hardware)
-*   Minimum SDK: 26 (Android 8.0)
-
-### Installation
-
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/yourusername/halt.git
-    ```
-2.  **Open in Android Studio** and synchronize the Gradle configuration.
-3.  **Build and deploy** to your device.
-
-### Device Configuration
-Initial setup requires the following permissions:
-1.  **Display Over Other Apps**: Enables the intervention overlay.
-2.  **Accessibility Service**: Enables UI hierarchy analysis for detection.
+👉 [Full Architecture Diagram](Diagram/architecture.mmd)
 
 ---
 
