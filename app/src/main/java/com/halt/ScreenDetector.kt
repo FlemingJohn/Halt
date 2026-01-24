@@ -10,17 +10,20 @@ import android.view.accessibility.AccessibilityNodeInfo
 class ScreenDetector {
 
     fun isExplore(root: AccessibilityNodeInfo, event: AccessibilityEvent?): Boolean {
-        // 1. Check for "Explore" header/text specifically as the prominent element
+        // 1. Check if the Search/Explore tab is explicitly selected in the bottom bar
+        val searchNodes = root.findAccessibilityNodeInfosByText("Search")
+        for (node in searchNodes) {
+            if (node.isSelected) return true
+        }
+
+        // 2. Check for "Explore" header specifically as a fallback
         val exploreNodes = root.findAccessibilityNodeInfosByText("Explore")
         if (exploreNodes.isEmpty()) return false
 
-        // 2. Refinement: If we also see "Search" or grid-like structure, it's more likely Explore
-        val searchNodes = root.findAccessibilityNodeInfosByText("Search")
-
-        // 3. EXCLUSION: If we see Home indicators, it's not Explore
+        // 3. EXCLUSION: If we see Home indicators (like "Your Story"), it's not Explore
         if (isHomeFeed(root)) return false
 
-        return searchNodes.isNotEmpty() || event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED
+        return true
     }
 
     fun isAllowedContext(root: AccessibilityNodeInfo, event: AccessibilityEvent?): Boolean {
@@ -68,15 +71,8 @@ class ScreenDetector {
             if (node.isSelected) return true
         }
 
-        // 2. Check for Shorts shelf in recommendations/search (The "Shorts" header)
-        // Usually, the shelf has a "Shorts" title and specific vertically oriented thumbs
-        // If we see "Shorts" and we are scrolling in a list that isn't the main player
-        if (shortsNodes.isNotEmpty() && event?.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED) {
-            // This is a bit broad, but targeted within the YouTube package
-            return true
-        }
-
-        // 3. Full-screen Shorts player features (vertical layout buttons)
+        // 2. Full-screen Shorts player features (vertical layout buttons)
+        // We use these as secondary signals for entering from search or direct links
         if (root.findAccessibilityNodeInfosByText("Remix").isNotEmpty() &&
                         root.findAccessibilityNodeInfosByText("Subscriptions").isNotEmpty()
         ) {
